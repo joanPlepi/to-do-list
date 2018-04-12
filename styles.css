@@ -1,0 +1,14 @@
+.btn-danger{
+  border-radius: 5px;
+  float: right;
+}
+
+.btn-info{
+  border-radius: 5px;
+  float: right;
+}
+
+.dontFloat{
+
+  float: none;
+}

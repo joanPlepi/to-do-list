@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>To do list</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script>
+    function loadContent()
+    {
+      //Create XMLHttpRequest
+      var xhttp , myObject;
+      xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange  = function(){
+
+        if(this.readyState == 4 && this.status == 200)
+        {
+          //Extract the data from the Json file. 
+           myObject = JSON.parse(this.responseText);
+         
+           var select = document.getElementById('choice');
+           //Id is given as string so I parse it as integer to use it as index for the array.
+           var myIndex = parseInt(select.options[select.selectedIndex].value);
+          
+           getTasks(myObject[myIndex].id);
+        }
+      };
+
+      xhttp.open("GET" , "names.json", true);
+      xhttp.send();
+    }
+
+    //Get tasks for the corresponding user. 
+    function getTasks(userId)
+    {
+
+      var xhttp2;
+      var tasks;
+      var j = 0;
+      xhttp2 = new XMLHttpRequest();
+      document.getElementById('printTasks').innerHTML = "";
+      xhttp2.onreadystatechange = function(){
+        if(this.readyState == 4 && this.status == 200)
+        {
+          console.log(this);
+          tasks = JSON.parse(this.responseText);
+          //Loop through the data extracted from tasks.json to find the tasks of the corresponding user
+          for( var i=0; i< tasks.length; i++)
+          {
+            if(tasks[i].userId == userId)
+            {
+              if(tasks[i].completed == false)
+                printTask(j , tasks, i);
+              else
+              {
+                 //If task is completed create the corresponding template to add it in the dom. 
+                  var newDiv = document.createElement('div');
+                  newDiv.setAttribute("class" , "well well-sm");
+
+                  var strike = document.createElement('strike');
+                  strike.append(tasks[i].title);
+                  newDiv.append(strike);
+                  $('#printTasks').append(newDiv);
+              }
+              j++;
+            }//end if
+          }//end for
+        }//end if
+
+      };
+      xhttp2.open("GET" , "tasks.json" , true);
+      xhttp2.send();
+    }
+
+    function printTask( j , tasks , i)
+    {
+      //Creates the template for adding the the element in the DOM. 
+      var divToAdd = document.createElement('div');
+      var buttonDelete = document.createElement('button');
+      buttonDelete.setAttribute("class" , "btn-danger btn-md");
+      buttonDelete.setAttribute("title" , "Delete task");
+      buttonDelete.setAttribute("id" , "" + j);
+      //adds an event for the button which marks a task as completed. 
+      buttonDelete.onclick = function(){
+        deleteTask(this.id , tasks , i);
+      };
+      
+      //Modifies the class of button element by adding bootstrap classes. 
+      var spanIcon = document.createElement('span');
+      spanIcon.setAttribute("class" , "glyphicon glyphicon-remove-sign");
+      buttonDelete.appendChild(spanIcon);
+
+      // Adding the title of the tasks
+      divToAdd.innerHTML = tasks[i].title ;
+      divToAdd.appendChild(buttonDelete);
+      divToAdd.setAttribute("class" , "well well-sm");
+      //Example of complete format of divToAdd element: 
+      /*
+    <div class="well well-sm">
+      fugiat veniam minus
+      <button class="btn-danger btn-md" title="Delete task" id="2">
+        <span class="glyphicon glyphicon-remove-sign"></span>
+      </button>
+    </div>
+      */
+      $('#printTasks').append(divToAdd);
+    }
+
+    //Is called after the button is clicked, after a task is marked as completed
+    function deleteTask(index , tasks , i)
+    {
+      //Gets the corresponding task using its ID. 
+      var offset = parseInt(index) + 1;
+      var text = $('#printTasks div:nth-child(' + offset + ')').text();
+      $( '#printTasks div:nth-child(' + offset + ')' ).text("");
+      //Adds a strike to the corresponding task, to indicate that it is completed. 
+      var strike = document.createElement('strike');
+      strike.append(text);
+      $('#printTasks div:nth-child(' + offset + ')' ).append(strike);
+
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function(){
+
+        if(this.readyState == 4 && this.status == 200)
+        {
+          //do nothing here
+        }
+
+      }
+      //Makes a request at updateFile.php to update the tasks.json file
+      xhttp.open("GET", "updateFile.php?index=" + i, true);
+      xhttp.send();
+    }
+
+
+    $(document).ready(function(){
+      //Loads the users.
+      $.getJSON("names.json" , function(data){
+
+        $.each(data , function(key , val) {
+
+            $('select').append('<option value=' + key + '>' + val['name'] + '</option>');
+        });
+
+      });
+
+    });
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1 class="col-sm-offset-4"> Welcome in TO-DO-LIST</h1>
+    <br><br>
+    <div class="row">
+      <div class="col-sm-4 col-sm-offset-3"><select id="choice" class="form-control" onchange="loadContent()">
+      </select></div>
+      <div class="col-sm-2"><button type="button" onclick="loadContent()" class="btn-info btn-lg" id="ky">
+      CLICK</button>
+      </div>
+    </div>
+
+    <br>
+    <div id="printTasks">
+      <!-- Add tasks here -->
+    </div>
+  </div>
+</body>
+</html>
